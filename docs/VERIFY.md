@@ -1,6 +1,6 @@
 # Verify the static site
 
-Last live proof: 2026-11-07 — blocked — deployment not yet run
+Last live proof: 2026-11-07 — changed — .verification/site-verification.zip
 
 ## Boundary
 
@@ -27,9 +27,24 @@ All three exact HTTPS URLs must return HTTP 200 without authentication:
 
 Capture curl output, response bodies and headers in the task artifact directory.
 Compare the served HTML and CSS to the source. Use the installed Playwright package
-from `/Users/calstudio/.hermes/hermes-agent/node_modules/playwright` to open the live
-home page, click Privacy, Terms and Home, and assert the resulting URL and heading.
-Check no horizontal overflow at 390px and capture each page, plus home at 1440px.
+from `/Users/calstudio/.hermes/hermes-agent/node_modules/playwright` with the already
+installed Chrome (`channel: 'chrome'`) to open the live home page, click Privacy, Terms and Home,
+and assert the resulting URL and heading. The Playwright-managed Chromium binary is absent;
+do not install a browser merely to repeat this check.
+The repeatable task helper is `verify-live.mjs` in the retained `site-verification.zip` artifact.
+On this host, extract it in a writable evidence directory and run `node verify-live.mjs`.
+The helper names the checkout above in its `source` constant; update that only when repeating
+from a different checkout.
+Check no horizontal overflow at 390px and capture each page, plus each page at 1440px.
+Capture through a fresh page sized before navigation; allow 300ms for Chrome raster completion.
+In-place resizing of tall pages caused repeated raster tiles in initial screenshots on Chrome 157.
+For an independent mobile capture with the existing CLI:
+
+```sh
+playwright screenshot --channel chrome --viewport-size '390,844' --full-page \
+  --wait-for-timeout 300 https://mattsagentcal.github.io/privacy.html privacy-390.png
+```
+
 Check keyboard focus reaches the navigation. Keep a Playwright trace and JSON receipt.
 Run this as one live E2E journey; do not substitute unit tests or mock responses.
 
@@ -65,7 +80,9 @@ curl --proto '=https' --fail --silent --show-error --output /dev/null \
 
 The task handoff `RESULT.md` records the live output, exact publication commit,
 artifact locations and the remaining Google account steps. Browser screenshots,
-trace and response bodies stay outside the public repository.
+trace and response bodies stay outside the public repository, under the ignored
+`.verification/` directory and in the task attachments. The local evidence archive named
+in the proof line must remain present after the task workspace is cleaned up.
 Close the browser in a `finally` block, including on failure. Do not stop shared
 browsers or services. Retain no process or local listener. GitHub Pages is the
 requested continuing hosted artifact and stays enabled.
